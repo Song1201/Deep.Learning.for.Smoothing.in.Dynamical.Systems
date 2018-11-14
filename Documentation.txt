@@ -1,0 +1,2 @@
+All data in this project are 1 dimensional data. All programs only promise 
+working on 1 dimensional data.

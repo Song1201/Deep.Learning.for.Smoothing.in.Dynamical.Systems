@@ -1,12 +1,25 @@
 import numpy as np
 import tensorflow as tf
-from GenerativeModel import LG, NLG, LnonGaussian
 from smootherKalman import smoothKalman
 import matplotlib.pyplot as plt
 #%%
-'''
-Methods
-'''
+def dilatedConv(kernelShape,numKernel,dilatFactor,x):
+	# kernelShape a list
+	weightShape = kernelShape.copy()
+	weightShape.append(numKernel)
+	w = tf.Variable(tf.truncated_normal(weightShape,stddev=0.1)) # weight
+	b = tf.Variable(tf.constant(0.1,shape=[numKernel])) # bias
+	return tf.nn.convolution(x,w,dilation_rate=[dilatFactor],padding='VALID')
+
+
+
+#shapen här är 3 - bredd på filtret, 1 - antal kanaler in, 60 - antal kanaler ut 
+#(hur många olika filter vi applyar)
+W_conv1 = weight_variable([3,1,60])#inte dilated nu men lägg in det sen
+b_conv1 = bias_variable([60])
+
+out1 = tf.nn.relu(conv1d(observed, W_conv1) + b_conv1)	
+
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
@@ -32,73 +45,12 @@ def returnNextBatch(batch_size, x, z):
     idx = np.random.randint(x_size, size=batch_size)
     return x[idx], z[idx]
     
-#def returnNextBatch(batch_size, nTimeSteps, model):
-#    z = np.zeros([batch_size, nTimeSteps, dim])
-#    x = np.zeros([batch_size, nTimeSteps, dim])
-#    for i in range(batch_size):
-#        z[i], x[i] = model.generateSamples(nTimeSteps)
-#    
-#    return z, x
-
-    
-'''
-Input parameters
-(zDim, xDim, A, B, Q, R, z0, Q0)
-'''
-#%%
-dim = 1
-zDim = dim
-xDim = dim
-z0 = np.zeros(dim)
-A = 0.9*np.identity(dim)
-B = 3.5*np.identity(dim)
-Q = np.identity(dim)
-R = Q
-Q0 = Q
-
-
-'''generate data'''
-#%%
-
-model = LnonGaussian(zDim, xDim, A, B, Q, R, z0, Q0)
-
-nTimeSteps = 200
-nTrainSamples = 10000
-nTestSamples = 1#00#0
-zTrain = np.zeros([nTrainSamples, nTimeSteps, dim])
-xTrain = np.zeros([nTrainSamples, nTimeSteps, dim])
-zTest = np.zeros([nTestSamples, nTimeSteps, dim])
-xTest = np.zeros([nTestSamples, nTimeSteps, dim])
-
-for i in range(0,nTrainSamples):
-    zTrain[i], xTrain[i] = model.generateSamples(nTimeSteps)
-    
-for i in range(0,nTestSamples):
-    zTest[i], xTest[i] = model.generateSamples(nTimeSteps)
-
-#Reshape for 1D problem    
-zTrain = zTrain.reshape([nTrainSamples, nTimeSteps, dim])
-xTrain = xTrain.reshape([nTrainSamples, nTimeSteps, dim])
-zTest = zTest.reshape([nTestSamples, nTimeSteps, dim])
-xTest = xTest.reshape([nTestSamples, nTimeSteps, dim])
-
-
-'''
-Neural net part
-'''
-#%%
-
 
 observed = tf.placeholder(dtype = tf.float32, shape = [None, nTimeSteps, 1])
 hidden = tf.placeholder(dtype=tf.float32, shape = [None, nTimeSteps, 1])
 hidden_reshape = tf.reshape(hidden, [-1, nTimeSteps])
 
-#shapen här är 3 - bredd på filtret, 1 - antal kanaler in, 60 - antal kanaler ut 
-#(hur många olika filter vi applyar)
-W_conv1 = weight_variable([3,1,60])#inte dilated nu men lägg in det sen
-b_conv1 = bias_variable([60])
 
-out1 = tf.nn.relu(conv1d(observed, W_conv1) + b_conv1)
 
 #layer 2
 W_conv2 = weight_variable([3,60,60])
@@ -155,6 +107,57 @@ b_convFinal = bias_variable([nTimeSteps])
 out_final = tf.nn.conv1d(out_flat, W_convFinal, 1, padding='VALID')
 
 output = tf.reshape(out_final, [-1, nTimeSteps])
+
+    
+'''
+Input parameters
+(zDim, xDim, A, B, Q, R, z0, Q0)
+'''
+#%%
+dim = 1
+zDim = dim
+xDim = dim
+z0 = np.zeros(dim)
+A = 0.9*np.identity(dim)
+B = 3.5*np.identity(dim)
+Q = np.identity(dim)
+R = Q
+Q0 = Q
+
+
+'''generate data'''
+#%%
+
+model = LnonGaussian(zDim, xDim, A, B, Q, R, z0, Q0)
+
+nTimeSteps = 200
+nTrainSamples = 10000
+nTestSamples = 1#00#0
+zTrain = np.zeros([nTrainSamples, nTimeSteps, dim])
+xTrain = np.zeros([nTrainSamples, nTimeSteps, dim])
+zTest = np.zeros([nTestSamples, nTimeSteps, dim])
+xTest = np.zeros([nTestSamples, nTimeSteps, dim])
+
+for i in range(0,nTrainSamples):
+    zTrain[i], xTrain[i] = model.generateSamples(nTimeSteps)
+    
+for i in range(0,nTestSamples):
+    zTest[i], xTest[i] = model.generateSamples(nTimeSteps)
+
+#Reshape for 1D problem    
+zTrain = zTrain.reshape([nTrainSamples, nTimeSteps, dim])
+xTrain = xTrain.reshape([nTrainSamples, nTimeSteps, dim])
+zTest = zTest.reshape([nTestSamples, nTimeSteps, dim])
+xTest = xTest.reshape([nTestSamples, nTimeSteps, dim])
+
+
+'''
+Neural net part
+'''
+#%%
+
+
+
 
 #loss function and optimization step
 loss = tf.reduce_sum(tf.sqrt(1+tf.square(hidden_reshape - output)) -1)
