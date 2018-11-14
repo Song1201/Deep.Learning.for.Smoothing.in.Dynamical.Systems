@@ -3,53 +3,40 @@ import tensorflow as tf
 from smootherKalman import smoothKalman
 import matplotlib.pyplot as plt
 #%%
-def dilatedConv(kernelShape,numKernel,dilatFactor,x):
-	# kernelShape a list
+def dilatedConvLayer(kernelLength,numKernel,dilatFactor,x):
 	weightShape = kernelShape.copy()
 	weightShape.append(numKernel)
-	w = tf.Variable(tf.truncated_normal(weightShape,stddev=0.1)) # weight
-	b = tf.Variable(tf.constant(0.1,shape=[numKernel])) # bias
-	return tf.nn.convolution(x,w,dilation_rate=[dilatFactor],padding='VALID')
+	w = tf.Variable(tf.truncated_normal([kernelLength,x.shape[2].value,numKernel],
+    stddev=0.1))
+	b = tf.Variable(tf.constant(0.1,shape=[numKernel]))
+	return tf.nn.convolution(x,w,dilation_rate=[dilatFactor],padding='VALID') + b
 
+def buildCnnPointEstimator(numTimeSteps) {
+  KERNEL_LENGTH = 3
+  x = tf.placeholder(dtype = tf.float32, shape = [None, nTimeSteps, 1])
+  with tf.variable_scope("Layer1"):
+    out1 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=1,
+      x))
+  with tf.variable_scope("Layer2"):
+    out2 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=1,
+    out1))
+  with tf.variable_scope("Layer3"):
+    out3 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=2,
+    out2))
+  with tf.variable_scope("Layer4"):
+    out4 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=4,
+    out3))
+  with tf.variable_scope("Layer5"):
+    out5 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=8,
+    out4))
+  with tf.variable_scope("Layer6"):
+    out6 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,
+      dilatFactor=16,out5))
+  with tf.variable_scope("Layer7"):
+    out7 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,
+      dilatFactor=32,out6))
 
-
-#shapen här är 3 - bredd på filtret, 1 - antal kanaler in, 60 - antal kanaler ut 
-#(hur många olika filter vi applyar)
-W_conv1 = weight_variable([3,1,60])#inte dilated nu men lägg in det sen
-b_conv1 = bias_variable([60])
-
-out1 = tf.nn.relu(conv1d(observed, W_conv1) + b_conv1)	
-
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
-
-def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
-
-def conv1d(x, W):#kasnke inte funkar. testa, annars läs dokumentationen
-    return tf.nn.conv1d(x, W, 1, padding='VALID')
-
-def convDillated1d(x, W, layer):
-    conv = tf.nn.convolution(x, W, dilation_rate=[2**layer], padding='VALID')
-    return conv
-
-def returnNextBatch(batch_size, x, z):
-    x_size = np.shape(x)[0]
-    
-    if x_size < batch_size:
-        raise Exception("You are trying to get a batch that is larger than " +
-                        "the amount of samples")
-    
-    idx = np.random.randint(x_size, size=batch_size)
-    return x[idx], z[idx]
-    
-
-observed = tf.placeholder(dtype = tf.float32, shape = [None, nTimeSteps, 1])
-hidden = tf.placeholder(dtype=tf.float32, shape = [None, nTimeSteps, 1])
-hidden_reshape = tf.reshape(hidden, [-1, nTimeSteps])
-
+}
 
 
 #layer 2
@@ -107,6 +94,41 @@ b_convFinal = bias_variable([nTimeSteps])
 out_final = tf.nn.conv1d(out_flat, W_convFinal, 1, padding='VALID')
 
 output = tf.reshape(out_final, [-1, nTimeSteps])
+
+observed = tf.placeholder(dtype = tf.float32, shape = [None, nTimeSteps, 1])
+hidden = tf.placeholder(dtype=tf.float32, shape = [None, nTimeSteps, 1])
+hidden_reshape = tf.reshape(hidden, [-1, nTimeSteps])
+
+def weight_variable(shape):
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    return tf.Variable(initial)
+
+def bias_variable(shape):
+    initial = tf.constant(0.1, shape=shape)
+    return tf.Variable(initial)
+
+def conv1d(x, W):#kasnke inte funkar. testa, annars läs dokumentationen
+    return tf.nn.conv1d(x, W, 1, padding='VALID')
+
+def convDillated1d(x, W, layer):
+    conv = tf.nn.convolution(x, W, dilation_rate=[2**layer], padding='VALID')
+    return conv
+
+def returnNextBatch(batch_size, x, z):
+    x_size = np.shape(x)[0]
+    
+    if x_size < batch_size:
+        raise Exception("You are trying to get a batch that is larger than " +
+                        "the amount of samples")
+    
+    idx = np.random.randint(x_size, size=batch_size)
+    return x[idx], z[idx]
+    
+
+
+
+
+
 
     
 '''
