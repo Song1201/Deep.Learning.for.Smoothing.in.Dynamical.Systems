@@ -12,107 +12,71 @@ def dilatedConvLayer(kernelLength,numKernel,dilatFactor,x):
 	return tf.nn.convolution(x,w,dilation_rate=[dilatFactor],padding='VALID') + b
 
 def buildCnnPointEstimator(numTimeSteps) {
-  KERNEL_LENGTH = 3
   x = tf.placeholder(dtype = tf.float32, shape = [None, nTimeSteps, 1])
-  with tf.variable_scope("Layer1"):
-    out1 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=1,
-      x))
-  with tf.variable_scope("Layer2"):
-    out2 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=1,
-    out1))
-  with tf.variable_scope("Layer3"):
-    out3 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=2,
-    out2))
-  with tf.variable_scope("Layer4"):
-    out4 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=4,
-    out3))
-  with tf.variable_scope("Layer5"):
-    out5 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=8,
-    out4))
-  with tf.variable_scope("Layer6"):
-    out6 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,
-      dilatFactor=16,out5))
-  with tf.variable_scope("Layer7"):
-    out7 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,
-      dilatFactor=32,out6))
 
+  conv1 = tf.layers.conv1d(inputs=x,filters=60,kernel_size=3,dilation_rate=1,
+    activation=tf.nn.relu,use_bias=True,
+    kernel_initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.1),
+    bias_initializer=tf.constant_initializer(value=0.1))
+  conv2 = tf.layers.conv1d(inputs=conv1,filters=60,kernel_size=3,
+    dilation_rate=1,activation=tf.nn.relu,use_bias=True,
+    kernel_initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.1),
+    bias_initializer=tf.constant_initializer(value=0.1))
+  conv3 = tf.layers.conv1d(inputs=conv2,filters=60,kernel_size=3,
+    dilation_rate=2,activation=tf.nn.relu,use_bias=True,
+    kernel_initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.1),
+    bias_initializer=tf.constant_initializer(value=0.1))
+  conv4 = tf.layers.conv1d(inputs=conv3,filters=60,kernel_size=3,
+    dilation_rate=4,activation=tf.nn.relu,use_bias=True,
+    kernel_initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.1),
+    bias_initializer=tf.constant_initializer(value=0.1))
+  conv5 = tf.layers.conv1d(inputs=conv4,filters=60,kernel_size=3,
+    dilation_rate=8,activation=tf.nn.relu,use_bias=True,
+    kernel_initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.1),
+    bias_initializer=tf.constant_initializer(value=0.1))
+  conv6 = tf.layers.conv1d(inputs=conv5,filters=60,kernel_size=3,
+    dilation_rate=16,activation=tf.nn.relu,use_bias=True,
+    kernel_initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.1),
+    bias_initializer=tf.constant_initializer(value=0.1))
+  conv7 = tf.layers.conv1d(inputs=conv6,filters=60,kernel_size=3,
+    dilation_rate=32,activation=tf.nn.relu,use_bias=True,
+    kernel_initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.1)
+    bias_initializer=tf.constant_initializer(value=0.1))
+  conv7Flat = tf.layers.flatten(conv7)
+  output = tf.layers.dense(inputs=conv7Flat,units=numTimeSteps,use_bias=True,
+    kernel_initializer=tf.truncated_normal_initializer(mean=0.0,stddev=0.1),
+    bias_initializer=tf.constant_initializer(value=0.1))
+  
+  return x, output
+  # with tf.variable_scope("Conv1"):
+  #   out1 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=1,
+  #     x))
+  # with tf.variable_scope("Conv2"):
+  #   out2 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=1,
+  #   out1))
+  # with tf.variable_scope("Conv3"):
+  #   out3 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=2,
+  #   out2))
+  # with tf.variable_scope("Conv4"):
+  #   out4 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=4,
+  #   out3))
+  # with tf.variable_scope("Conv5"):
+  #   out5 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,dilatFactor=8,
+  #   out4))
+  # with tf.variable_scope("Conv6"):
+  #   out6 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,
+  #     dilatFactor=16,out5))
+  # with tf.variable_scope("Conv7"):
+  #   out7 = tf.nn.relu(dilatedConvLayer(KERNEL_LENGTH,numKernel=60,
+  #     dilatFactor=32,out6))
+  # with tf.variable_scope("FullyConnect"):
+  #   flatLength = out7.shape[1].value * out7.shape[2].value
+  #   outFlat = tf.reshape(out7,[-1,flatLength,1])
 }
 
-
-#layer 2
-W_conv2 = weight_variable([3,60,60])
-b_conv2 = bias_variable([60])
-
-out2 = tf.nn.relu(conv1d(out1, W_conv2) + b_conv2)
-
-#layer 3
-W_conv3 = weight_variable([3,60,60])
-b_conv3 = bias_variable([60])
-
-out3 = tf.nn.relu(convDillated1d(out2, W_conv3, 1))
-
-#layer 4
-W_conv4 = weight_variable([3,60,60])
-b_conv4 = bias_variable([60])
-
-out4 = tf.nn.relu(convDillated1d(out3, W_conv4, 2))
-
-#layer 5
-W_conv5 = weight_variable([3,60,60])
-b_conv5 = bias_variable([60])
-
-out5 = tf.nn.relu(convDillated1d(out4, W_conv5, 3))
-
-#layer 6
-W_conv6 = weight_variable([3,60,60])
-b_conv6 = bias_variable([60])
-
-out6 = tf.nn.relu(convDillated1d(out5, W_conv6, 4))
-
-#layer 7
-W_conv7 = weight_variable([3,60,60])
-b_conv7 = bias_variable([60])
-
-out7 = tf.nn.relu(convDillated1d(out6, W_conv7, 5))
-
-
-#flat layer
-'''
-out_flat = tf.reshape(out2, [-1, nTimeSteps*60])
-
-W_flat = weight_variable([nTimeSteps*60, nTimeSteps])
-b_flat = bias_variable([nTimeSteps])
-
-#output layer
-output = tf.matmul(out_flat, W_flat) + b_flat
-'''
-
-out_flat = tf.reshape(out7, [-1, 72*60, 1])
-W_convFinal = weight_variable([72*60, 1, nTimeSteps])
-b_convFinal = bias_variable([nTimeSteps])
-
-out_final = tf.nn.conv1d(out_flat, W_convFinal, 1, padding='VALID')
-
-output = tf.reshape(out_final, [-1, nTimeSteps])
-
-observed = tf.placeholder(dtype = tf.float32, shape = [None, nTimeSteps, 1])
-hidden = tf.placeholder(dtype=tf.float32, shape = [None, nTimeSteps, 1])
-hidden_reshape = tf.reshape(hidden, [-1, nTimeSteps])
-
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
-
-def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
-
-def conv1d(x, W):#kasnke inte funkar. testa, annars läs dokumentationen
-    return tf.nn.conv1d(x, W, 1, padding='VALID')
-
-def convDillated1d(x, W, layer):
-    conv = tf.nn.convolution(x, W, dilation_rate=[2**layer], padding='VALID')
-    return conv
+def trainCnnPointEstimator() {
+  
+}
 
 def returnNextBatch(batch_size, x, z):
     x_size = np.shape(x)[0]
@@ -123,18 +87,7 @@ def returnNextBatch(batch_size, x, z):
     
     idx = np.random.randint(x_size, size=batch_size)
     return x[idx], z[idx]
-    
 
-
-
-
-
-
-    
-'''
-Input parameters
-(zDim, xDim, A, B, Q, R, z0, Q0)
-'''
 #%%
 dim = 1
 zDim = dim
