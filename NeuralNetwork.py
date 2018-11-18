@@ -2,7 +2,7 @@ import tensorflow as tf
 
 # Build a graph for CNN point estimator. Return the placeholder for input, and 
 # other necessary interface.
-def buildCnnPointEstimator(numTimeSteps):
+def _buildCnnPointEstimator(numTimeSteps):
   KERNEL_SIZE = 3
   NUM_KERNEL = 60
   INIT_STD = 0.1
@@ -38,3 +38,9 @@ def buildCnnPointEstimator(numTimeSteps):
     trainStep = tf.train.AdamOptimizer(1e-4).minimize(loss)
 
   return measure, hidden, output, loss, trainStep
+
+class CnnPointEstimator:
+  def __init__(self,numTimeSteps):
+    self.measure,self.hidden,self.output,self.loss,self.trainStep = \
+      _buildCnnPointEstimator(numTimeSteps)
+    

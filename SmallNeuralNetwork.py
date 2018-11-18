@@ -4,7 +4,7 @@
 #%%
 import numpy as np
 import tensorflow as tf
-import GenerativeModel as gm;
+import GenerativeModel as gm
 import matplotlib.pyplot as plt
 import NeuralNetwork as nn
 
@@ -43,17 +43,21 @@ measure = measure.reshape(-1,200,1)
 #   loss = tf.reduce_sum(tf.sqrt(1+tf.square(hiddenP - output))-1)
 #   train_step = tf.train.AdamOptimizer(1e-4).minimize(loss)
 
-measureP,hiddenP,output,loss,train_step = nn.buildCnnPointEstimator(200)
+# measureP,hiddenP,output,loss,train_step = nn.buildCnnPointEstimator(200)
+
+cnnPointEstimator = nn.CnnPointEstimator(200)
 
 saver = tf.train.Saver()
 
 with tf.Session() as sess:
   sess.run(tf.initializers.global_variables())
   # sess.run(tf.initializers.local_variables())
-  for i in range(200):
-    sess.run(train_step,{measureP:measure,hiddenP:hidden})
-    if((i+1)%20==0): print(sess.run(loss,{measureP:measure,
-      hiddenP:hidden}))
+  for i in range(1000):
+    sess.run(cnnPointEstimator.trainStep,{cnnPointEstimator.measure:measure,
+      cnnPointEstimator.hidden:hidden})
+    if((i+1)%20==0): 
+      print(sess.run(cnnPointEstimator.loss,{cnnPointEstimator.measure:measure,
+        cnnPointEstimator.hidden:hidden}))
 
   path = saver.save(sess,'SmallNN/SmallNN.ckpt')
     

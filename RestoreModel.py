@@ -33,11 +33,13 @@ measure = measure.reshape(-1,200,1)
 #   loss = tf.reduce_sum(tf.sqrt(1+tf.square(hiddenT - output))-1)
 #   train_step = tf.train.AdamOptimizer(1e-4).minimize(loss)
 
-measureP,hiddenP,output,loss,train_step = nn.buildCnnPointEstimator(200)
+# measureP,hiddenP,output,loss,train_step = nn.buildCnnPointEstimator(200)
+cnnPointEstimator = nn.CnnPointEstimator(200)
 
 #%%
 saver = tf.train.Saver()
 
 with tf.Session() as sess:
   saver.restore(sess,'SmallNN/SmallNN.ckpt')
-  print(sess.run(loss,{measureP:measure,hiddenP:hidden}))
+  print(sess.run(cnnPointEstimator.loss,{cnnPointEstimator.measure:measure,
+    cnnPointEstimator.hidden:hidden}))
