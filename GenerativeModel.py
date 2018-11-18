@@ -18,5 +18,5 @@ def linearGaussian(cZ,cX,meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries):
     x[:,i] = cX*z[:,i-1]+np.random.normal(meanX,stdX,(numSeries))
 
   np.append(z,x,0).dump('Generated.Data/LG.'+str(cZ)+'.'+str(cX)+'.'+
-  str(meanX)+'.'+str(stdX)+'.'+str(meanZ)+'.'+str(stdZ))
+  str(meanZ)+'.'+str(stdZ)+'.'+str(meanX)+'.'+str(stdX))
   
