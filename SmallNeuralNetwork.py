@@ -15,7 +15,7 @@ import NeuralNetwork as nn
 hidden,measure = gm.loadData('Generated.Data/LG.1.2.0.0.3.0.0.1')
 # Don't reshape hidden since it already has the same shape as output from the 
 # network
-measure = measure.reshape(-1,200,1)
+# measure = measure.reshape(-1,200,1)
 
 
 #%%
@@ -47,17 +47,19 @@ measure = measure.reshape(-1,200,1)
 
 cnnPointEstimator = nn.CnnPointEstimator(200)
 
-saver = tf.train.Saver()
+# saver = tf.train.Saver()
 
-with tf.Session() as sess:
-  sess.run(tf.initializers.global_variables())
-  # sess.run(tf.initializers.local_variables())
-  for i in range(1000):
-    sess.run(cnnPointEstimator.trainStep,{cnnPointEstimator.measure:measure,
-      cnnPointEstimator.hidden:hidden})
-    if((i+1)%20==0): 
-      print(sess.run(cnnPointEstimator.loss,{cnnPointEstimator.measure:measure,
-        cnnPointEstimator.hidden:hidden}))
+# with tf.Session() as sess:
+#   sess.run(tf.initializers.global_variables())
+#   # sess.run(tf.initializers.local_variables())
+#   for i in range(1000):
+#     sess.run(cnnPointEstimator.trainStep,{cnnPointEstimator.measure:measure,
+#       cnnPointEstimator.hidden:hidden})
+#     if((i+1)%20==0): 
+#       print(sess.run(cnnPointEstimator.loss,{cnnPointEstimator.measure:measure,
+#         cnnPointEstimator.hidden:hidden}))
 
-  path = saver.save(sess,'SmallNN/SmallNN.ckpt')
+cnnPointEstimator.train(1000,measure,hidden,'SmallNN/SmallNN.ckpt')
+
+# saver.save(sess,'SmallNN/SmallNN.ckpt')
     

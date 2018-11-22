@@ -7,7 +7,6 @@ import NeuralNetwork as nn
 
 #%%
 hidden,measure = gm.loadData('Generated.Data/LG.1.2.0.0.3.0.0.1')
-measure = measure.reshape(-1,200,1)
 
 # with tf.device('/GPU:0'):
 #   measureT = tf.convert_to_tensor(measure.reshape([-1,200,1]),dtype=tf.float32)
@@ -37,9 +36,13 @@ measure = measure.reshape(-1,200,1)
 cnnPointEstimator = nn.CnnPointEstimator(200)
 
 #%%
-saver = tf.train.Saver()
 
-with tf.Session() as sess:
-  saver.restore(sess,'SmallNN/SmallNN.ckpt')
-  print(sess.run(cnnPointEstimator.loss,{cnnPointEstimator.measure:measure,
-    cnnPointEstimator.hidden:hidden}))
+# with tf.Session() as sess:
+#   saver.restore(sess,'SmallNN/SmallNN.ckpt')
+#   print(sess.run(cnnPointEstimator.loss,{cnnPointEstimator.measure:measure,
+#     cnnPointEstimator.hidden:hidden}))
+
+#%%
+output,loss = cnnPointEstimator.infer(measure,hidden,'SmallNN/SmallNN.ckpt')
+print(output.shape)
+print(loss)
