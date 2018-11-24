@@ -30,6 +30,8 @@ class CnnPointEstimator:
 
         if (i+1)%10==0:    
           print('Epoch: ' + str(i+1) + '  Loss: ' + str(loss[iterRun-1]))
+          plt.plot(loss[:iterRun-1],color='blue')
+          plt.show()
       
       saver.save(sess,savePath)
     

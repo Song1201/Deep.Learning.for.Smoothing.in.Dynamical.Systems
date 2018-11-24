@@ -18,9 +18,4 @@ cnnPointEstimator = nn.CnnPointEstimator(200)
 cnnPointEstimator.train(500,30,measure,hidden,'SmallNN/SmallNN.ckpt')
 
 
-print("Training done!")
-# saver.save(sess,'SmallNN/SmallNN.ckpt')
-    
-
-
-#%%
+print("Training done!")    
