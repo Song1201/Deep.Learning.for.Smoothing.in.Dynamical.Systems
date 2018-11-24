@@ -8,19 +8,19 @@ import GenerativeModel as gm
 import matplotlib.pyplot as plt
 import NeuralNetwork as nn
 
-# #%%
-# gm.linearGaussian(1,2,0,0.3,0,0.1,200,1000)
-
 #%% Get data from generative model
-hidden,measure = gm.loadData('Generated.Data/LG.1.2.0.0.3.0.0.1')
+hidden,measure = gm.loadData('Generated.Data/LG.Train.0.9.3.5.0.1.0.1')
 
 cnnPointEstimator = nn.CnnPointEstimator(200)
 
 
-
-cnnPointEstimator.train(50,500,measure,hidden,'SmallNN/SmallNN.ckpt')
+#%%
+cnnPointEstimator.train(500,30,measure,hidden,'SmallNN/SmallNN.ckpt')
 
 
 print("Training done!")
 # saver.save(sess,'SmallNN/SmallNN.ckpt')
     
+
+
+#%%

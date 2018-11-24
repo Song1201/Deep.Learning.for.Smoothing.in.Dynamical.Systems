@@ -1,5 +1,6 @@
 import tensorflow as tf 
 import numpy as np
+import matplotlib.pyplot as plt
 
 class CnnPointEstimator:
 
@@ -14,21 +15,26 @@ class CnnPointEstimator:
     measure = measure.reshape(-1,200,1)
     np.random.shuffle(measure)
     numIters = measure.shape[0]//batchSize
+    loss = np.zeros([numIters*numEpochs])
 
     with tf.Session() as sess:
       sess.run(tf.initializers.global_variables())
+      iterRun = 0 # How many iteration has been run during training
       for i in range(numEpochs):
         for j in range(numIters):
           batchMeasure = measure[j*batchSize:(j+1)*batchSize]
           batchHidden = hidden[j*batchSize:(j+1)*batchSize]
-          sess.run(self.trainStep,{self.measure:batchMeasure,
-            self.hidden:batchHidden})
+          loss[iterRun],dump = sess.run([self.loss,self.trainStep],
+            {self.measure:batchMeasure,self.hidden:batchHidden})
+          iterRun += 1
 
-        if (i+1)%50==0:    
-          print('Epoch: ' + str(i+1) + '  Loss: ' +
-            str(sess.run(self.loss,{self.measure:measure,self.hidden:hidden})))
+        if (i+1)%10==0:    
+          print('Epoch: ' + str(i+1) + '  Loss: ' + str(loss[iterRun-1]))
       
       saver.save(sess,savePath)
+    
+    print(loss)
+    loss.dump(savePath[:-4]+'loss')
 
   def infer(self,measure,hidden,variablePath):
     # measure and hidden are 2-D numpy arrays, whose shape[1] is the number of 
