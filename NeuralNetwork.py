@@ -8,11 +8,17 @@ class CnnPointEstimator:
     self.measure,self.hidden,self.output,self.loss,self.trainStep = \
       self._buildCnnPointEstimator(numTimeSteps)
 
-  def train(self,batchSize,numEpochs,measure,hidden,savePath):
+  def train(self,batchSize,numEpochs,measure,hidden,savePath,testMeasure,
+    testHidden,testSample):
     # measure and hidden are 2-D numpy arrays, whose shape[1] is the number of 
     # time steps.
     saver = tf.train.Saver()
     measure = measure.reshape(-1,200,1)
+    testMeasure = testMeasure.reshape(-1,200,1)
+    # A index trick to make the one layer slice has the same number of dimension
+    # as before. 
+    sampleTestMeasure = testMeasure[testSample:testSample+1,:,:]
+    sampleTestHidden = testHidden[testSample:testSample+1]
     np.random.shuffle(measure)
     numIters = measure.shape[0]//batchSize
     loss = np.zeros([numIters*numEpochs])
@@ -29,13 +35,22 @@ class CnnPointEstimator:
           iterRun += 1
 
         if (i+1)%10==0:    
-          print('Epoch: ' + str(i+1) + '  Loss: ' + str(loss[iterRun-1]))
+          print('Epoch: '+str(i+1)+'  Train loss: '+str(loss[iterRun-1]))
           plt.plot(loss[:iterRun-1],color='blue')
+          plt.show()
+
+          print('Epoch: '+str(i+1)+'  Test loss: '+str(self.loss.eval(
+            {self.measure:testMeasure,self.hidden:testHidden})))
+          sampleTestOutput = self.output.eval({self.measure:sampleTestMeasure,
+            self.hidden:sampleTestHidden})
+          plt.scatter(np.arange(self.measure.shape[1].value),sampleTestMeasure,
+            marker='o',color='green',s=0.3)
+          plt.plot(sampleTestHidden.flatten(),color='blue')
+          plt.plot(sampleTestOutput.flatten(),color='red')
           plt.show()
       
       saver.save(sess,savePath)
     
-    print(loss)
     loss.dump(savePath[:-4]+'loss')
 
   def infer(self,measure,hidden,variablePath):

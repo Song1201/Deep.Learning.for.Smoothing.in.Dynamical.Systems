@@ -10,12 +10,13 @@ import NeuralNetwork as nn
 
 #%% Get data from generative model
 hidden,measure = gm.loadData('Generated.Data/LG.Train.0.9.3.5.0.1.0.1')
-
+testHidden, testMeasure = gm.loadData('Generated.Data/LG.Test.0.9.3.5.0.1.0.1')
 cnnPointEstimator = nn.CnnPointEstimator(200)
 
 
 #%%
-cnnPointEstimator.train(500,30,measure,hidden,'SmallNN/SmallNN.ckpt')
+cnnPointEstimator.train(500,30,measure,hidden,'SmallNN/SmallNN.ckpt',
+  testMeasure,testHidden,10)
 
 
 print("Training done!")    
