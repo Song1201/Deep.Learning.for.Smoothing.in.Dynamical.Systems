@@ -45,7 +45,9 @@ class CnnPointEstimator:
 
         if (i+1)%1==0:    
           print(dt.now().time())
-          print('Epoch: '+str(i+1)+'  Train loss: '+str(allLoss[iterRun-1]))
+          # Mean of all losses of batches in this epoch
+          meanLossEpoch = np.mean(allLoss[i*numIters:(i+1)*numIters])
+          print('Epoch: '+str(i+1)+'  Train loss: '+str(meanLossEpoch))
           plt.figure(figsize=(10,5))
           plt.plot(allLoss[:iterRun-1],color='blue')
           plt.show()
