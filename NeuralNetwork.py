@@ -92,26 +92,6 @@ class CnnPointEstimator:
         shape=[None,numTimeSteps,NUM_DATA_DIM])
       self.hidden = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
 
-      # with tf.variable_scope('Conv1',reuse=tf.AUTO_REUSE) as scope:
-      #   w = tf.get_variable(name='w',shape=[KERNEL_SIZE,NUM_DATA_DIM,NUM_KERNEL],
-      #     dtype=DTYPE,
-      #     initializer=tf.truncated_normal_initializer(stddev=INIT_STD))
-      #   b = tf.get_variable(name='b',shape=[NUM_KERNEL],dtype=DTYPE,
-      #     initializer=tf.constant_initializer(INIT_CONST))
-      #   conv = tf.nn.convolution(measure,w,dilation_rate=[1],padding='VALID')
-      #   preActivation = tf.nn.bias_add(conv,b)
-      #   conv1 = tf.nn.relu(preActivation)
-
-      # with tf.variable_scope('Conv2',reuse=tf.AUTO_REUSE) as scope:
-      #   w = tf.get_variable(name='w',shape=[KERNEL_SIZE,60,NUM_KERNEL],
-      #     dtype=DTYPE,
-      #     initializer=tf.truncated_normal_initializer(stddev=INIT_STD))
-      #   b = tf.get_variable(name='b',shape=[NUM_KERNEL],dtype=DTYPE,
-      #     initializer=tf.constant_initializer(INIT_CONST))
-      #   conv = tf.nn.convolution(conv1,w,dilation_rate=[1],padding='VALID')
-      #   preActivation = tf.nn.bias_add(conv,b)
-      #   conv2 = tf.nn.relu(preActivation)
-
       with tf.variable_scope('Conv1',reuse=tf.AUTO_REUSE) as scope:
         conv1 = self._dilatedConv(KERNEL_SIZE,self.measure,NUM_KERNEL,DTYPE,
           INIT_STD,INIT_CONST,1)
@@ -152,10 +132,6 @@ class CnnPointEstimator:
 
       # # loss defined according to report
       self.loss = tf.reduce_sum(tf.sqrt(1+tf.square(self.hidden-self.output))-1)
-      # trainStep = tf.train.AdamOptimizer(2e-4).minimize(loss)
-
-    # return measure, hidden, output, loss, trainStep
-    # return measure, hidden, output, 
 
   def _dilatedConv(self,kernelSize,inputTensor,numKernel,dtype,
     initStd,initConst,dilatedRate):
