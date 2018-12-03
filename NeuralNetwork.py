@@ -57,9 +57,9 @@ class CnnPointEstimator:
           sampleTestOutput = self.output.eval({self.measure:sampleTestMeasure,
             self.hidden:sampleTestHidden})
           plt.figure(figsize=(10,5))
-          plt.scatter(np.arange(self.measure.shape[1].value),sampleTestMeasure,
-            marker='o',color='green',s=0.3)
-          plt.plot(sampleTestHidden.flatten(),color='blue')
+          plt.scatter(np.arange(sampleTestHidden.shape[1]),sampleTestHidden,
+            marker='o',color='blue',s=4)
+          # plt.plot(Kalman,color='blue')
           plt.plot(sampleTestOutput.flatten(),color='red')
           plt.show()
       
