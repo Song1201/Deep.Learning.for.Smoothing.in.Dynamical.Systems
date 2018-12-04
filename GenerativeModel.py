@@ -7,6 +7,9 @@ def loadData(fileName):
   x = data[numSeries:,:]
   return z,x
 
+# z[t+1] = cZ*z[t] + N(meanZ,stdZ) hidden variable
+# x[t] = cX*z[t] + N(meanX,stdX) measure variable
+# z[0] = N(meanZ,stdZ)
 def linearGaussian(cZ,cX,meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries):
   z = np.zeros((numSeries,numTimeSteps))
   x = np.zeros((numSeries,numTimeSteps))
