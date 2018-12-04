@@ -22,9 +22,11 @@ import matplotlib.pyplot as plt
 
 testHidden, testMeasure = gm.loadData('Generated.Data/LG.Test.0.9.3.5.0.1.0.1')
 numTimeSteps = testHidden.shape[1]
-kf = ks.KalmanSmoother(0.9,3.5,0,1,0,1)
-testKalmanMean, testKalmanStd = kf.smooth(testMeasure)
-sampleNo = 123
+smoother = ks.KalmanSmoother(0.9,3.5,0,1,0,1)
+sampleNo = 456
+
+smoother.smooth(testMeasure,'Kalman.Results')
+testKalmanMean,testKalmanStd = smoother.loadResults('Kalman.Results')
 
 plt.figure(figsize=(10,5))
 plt.scatter(np.arange(numTimeSteps),testHidden[sampleNo],marker='o',
@@ -35,6 +37,3 @@ plt.show()
 plt.figure(figsize=(10,5))
 plt.plot(testKalmanStd,color='green')
 plt.show()
-
-print(testKalmanStd)
-
