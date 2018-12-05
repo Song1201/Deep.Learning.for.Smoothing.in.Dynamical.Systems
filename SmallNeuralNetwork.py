@@ -16,7 +16,7 @@ cnnPointEstimator = nn.CnnPointEstimator(200)
 
 #%%
 cnnPointEstimator.train(2e-4,100,200,measure,hidden,'SmallNN/SmallNN.ckpt',
-  testMeasure,testHidden,20)
+  testMeasure,testHidden,1312)
 
 
 print("Training done!")   

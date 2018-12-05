@@ -2,12 +2,11 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime as dt
+import KalmanSmoother as ks
 
 class CnnPointEstimator:
 
   def __init__(self,numTimeSteps):
-    # self.measure,self.hidden,self.output = self._buildCnnPointEstimator(
-    #   numTimeSteps)
     self._buildCnnPointEstimator(numTimeSteps)
 
   def train(self,lr,batchSize,numEpochs,measure,hidden,savePath,testMeasure,
@@ -25,10 +24,13 @@ class CnnPointEstimator:
     # as before. 
     sampleTestMeasure = testMeasure[testSample:testSample+1,:,:]
     sampleTestHidden = testHidden[testSample:testSample+1]
+    testKalmanZ,dump = ks.loadResults('Results.Data/LG.Kalman.Results')
+    sampleTestKalmanZ = testKalmanZ[testSample]
     numIters = measure.shape[0]//batchSize
     allLoss = np.zeros([numIters*numEpochs])
     iterRun = 0 # How many iteration has been run during training
     randIndex = np.arange(measure.shape[0])
+    
 
     with tf.Session() as sess:
       sess.run(tf.initializers.global_variables())
@@ -47,19 +49,21 @@ class CnnPointEstimator:
           print(dt.now().time())
           # Mean of all losses of batches in this epoch
           meanLossEpoch = np.mean(allLoss[i*numIters:(i+1)*numIters])
-          print('Epoch: '+str(i+1)+'  Train loss: '+str(meanLossEpoch))
+          print('Epoch: '+str(i+1)+'  Train loss per batch: ' + 
+            str(meanLossEpoch))
           plt.figure(figsize=(10,5))
           plt.plot(allLoss[:iterRun-1],color='blue')
           plt.show()
 
-          print('Epoch: '+str(i+1)+'  Test loss: '+str(self.loss.eval(
-            {self.measure:testMeasure,self.hidden:testHidden})))
+          print('Epoch: '+str(i+1)+'  Test loss per batch: '+str(self.loss.eval(
+            {self.measure:testMeasure,self.hidden:testHidden})/
+            testHidden.shape[0]*batchSize))
           sampleTestOutput = self.output.eval({self.measure:sampleTestMeasure,
             self.hidden:sampleTestHidden})
           plt.figure(figsize=(10,5))
           plt.scatter(np.arange(sampleTestHidden.shape[1]),sampleTestHidden,
             marker='o',color='blue',s=4)
-          # plt.plot(Kalman,color='blue')
+          plt.plot(sampleTestKalmanZ,color='green')
           plt.plot(sampleTestOutput.flatten(),color='red')
           plt.show()
       

@@ -26,7 +26,7 @@ smoother = ks.KalmanSmoother(0.9,3.5,0,1,0,1)
 sampleNo = 456
 
 smoother.smooth(testMeasure,'Kalman.Results')
-testKalmanMean,testKalmanStd = smoother.loadResults('Kalman.Results')
+testKalmanMean,testKalmanStd = ks.loadResults('Kalman.Results')
 
 plt.figure(figsize=(10,5))
 plt.scatter(np.arange(numTimeSteps),testHidden[sampleNo],marker='o',

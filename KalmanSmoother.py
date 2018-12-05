@@ -79,7 +79,7 @@ class KalmanSmoother:
     stdSmooth = self.smoothStd(x.shape[1])
     np.concatenate((zSmooth,stdSmooth.reshape(1,-1)),axis=0).dump(saveFile)
 
-  def loadResults(self,loadFile):
+def loadResults(loadFile):
     results = np.load(loadFile)
     return results[:-2,:], results[-1]
 
