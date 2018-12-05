@@ -1,18 +1,31 @@
 # Some testing code for this project.
 
-#%% Test Generative Model linear Gaussian data
+#%% Test Generative Model linear Gaussian function
 import GenerativeModel as gm
 import Visualization as vs
 
 def testGenerativeModelLG(cZ,cX,meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries,
 dataFileName):
-  gm.linearGaussian(cZ,cX,meanX,stdX,meanZ,stdZ,numTimeSteps,numSeries)
+  gm.linearGaussian(cZ,cX,meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries)
   z,x = gm.loadData(dataFileName)
   vs.scatterTimeSeries(z,'blue')
   vs.scatterTimeSeries(x,'green')
 
 testGenerativeModelLG(1,2,0,0.3,0,0.1,100,20,
 'Generated.Data/LG.1.2.0.0.3.0.0.1')
+
+#%% Test Generative Model nonlinear Gaussian function
+import GenerativeModel as gm
+import Visualization as vs
+
+def testGenerativeModelNLG(meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries,
+dataFileName):
+  gm.nonlinearGaussian(meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries)
+  z,x = gm.loadData(dataFileName)
+  vs.scatterTimeSeries(z,'blue')
+  vs.scatterTimeSeries(x,'green')
+
+testGenerativeModelNLG(0,0.3,0,0.1,100,20,'Generated.Data/NLG.0.0.3.0.0.1')
 
 #%% Test Kalman smoother
 import KalmanSmoother as ks
