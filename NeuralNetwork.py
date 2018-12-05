@@ -11,18 +11,14 @@ class CnnPointEstimator:
 
   def train(self,lr,batchSize,numEpochs,measure,hidden,savePath,testMeasure,
     testHidden,testSample):
+    # measure and hidden are 2-D numpy arrays, whose shape[1] is the number of 
+    # time steps.    
     with tf.device('/GPU:0'):
       trainStep = tf.train.AdamOptimizer(learning_rate=lr).minimize(
         self.loss)
-    
-    # measure and hidden are 2-D numpy arrays, whose shape[1] is the number of 
-    # time steps.
-    saver = tf.train.Saver()
-    measure = measure.reshape(-1,200,1)
-    testMeasure = testMeasure.reshape(-1,200,1)
     # A index trick to make the one layer slice has the same number of dimension
     # as before. 
-    sampleTestMeasure = testMeasure[testSample:testSample+1,:,:]
+    sampleTestMeasure = testMeasure[testSample:testSample+1]
     sampleTestHidden = testHidden[testSample:testSample+1]
     testKalmanZ,dump = ks.loadResults('Results.Data/LG.Kalman.Results')
     sampleTestKalmanZ = testKalmanZ[testSample]
@@ -31,7 +27,7 @@ class CnnPointEstimator:
     iterRun = 0 # How many iteration has been run during training
     randIndex = np.arange(measure.shape[0])
     
-
+    saver = tf.train.Saver()
     with tf.Session() as sess:
       sess.run(tf.initializers.global_variables())
       for i in range(numEpochs):
@@ -72,15 +68,21 @@ class CnnPointEstimator:
     allLoss.dump(savePath[:-4]+'loss')
     print('Training Done!')
 
-  def infer(self,measure,hidden,variablePath):
-    # measure and hidden are 2-D numpy arrays, whose shape[1] is the number of 
-    # time steps.   
-    measure = measure.reshape(-1,200,1) 
+  def infer(self,measure,variablePath): 
+    if len(measure.shape)==1: 
+      measure = measure.reshape(1,-1)
     saver = tf.train.Saver()
     with tf.Session() as sess:
       saver.restore(sess,variablePath)
+      return self.output.eval({self.measure:measure})
 
-      return sess.run([self.output,self.loss],{self.measure:measure})
+  def computeLoss(self,hypothesis,trueValue,variablePath):
+    if len(hypothesis.shape)==1: hypothesis = hypothesis.reshape(1,-1)
+    if len(trueValue.shape)==1: trueValue = trueValue.reshape(1,-1)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+      saver.restore(sess,variablePath)
+      return self.loss.eval({self.output:hypothesis,self.hidden:trueValue})
 
   # Build a graph for CNN point estimator. Return the placeholder for input, and 
   # other necessary interface.
@@ -89,16 +91,15 @@ class CnnPointEstimator:
     NUM_KERNEL = 60
     INIT_STD = 0.1
     INIT_CONST = 0.1
-    NUM_DATA_DIM = 1 # number of data dimensions
     DTYPE = tf.float32
 
     with tf.device('/GPU:0'):
-      self.measure = tf.placeholder(dtype=DTYPE,
-        shape=[None,numTimeSteps,NUM_DATA_DIM])
+      self.measure = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
+      measure = tf.reshape(self.measure,[-1,numTimeSteps,1])
       self.hidden = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
 
       with tf.variable_scope('Conv1',reuse=tf.AUTO_REUSE) as scope:
-        conv1 = self._dilatedConv(KERNEL_SIZE,self.measure,NUM_KERNEL,DTYPE,
+        conv1 = self._dilatedConv(KERNEL_SIZE,measure,NUM_KERNEL,DTYPE,
           INIT_STD,INIT_CONST,1)
 
       with tf.variable_scope('Conv2',reuse=tf.AUTO_REUSE) as scope:    
