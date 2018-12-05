@@ -4,12 +4,10 @@
 
 #%% Generate data
 import GenerativeModel as gm
-# Training data
+# Generate data from a linear Gaussian model
 gm.linearGaussian(0.9,3.5,0,1,0,1,200,20000)
-# Testing data
-gm.linearGaussian(0.9,3.5,0,1,0,1,200,5000)
 
-#%% Process the data with Kalman smoother.
+#%% Process data from linear Gaussian model with Kalman smoother.
 import KalmanSmoother as ks
 import GenerativeModel as gm
 import numpy as np
@@ -32,3 +30,13 @@ plt.show()
 plt.figure(figsize=(10,5))
 plt.plot(testKalmanStd,color='green')
 plt.show()
+
+#%% Build and train a CNN point estimator for linear Gaussian model
+import GenerativeModel as gm
+import NeuralNetwork as nn
+
+hidden,measure = gm.loadData('Generated.Data/LG.Train.0.9.3.5.0.1.0.1')
+testHidden, testMeasure = gm.loadData('Generated.Data/LG.Test.0.9.3.5.0.1.0.1')
+cnnPointEstimator = nn.CnnPointEstimator(hidden.shape[1])
+cnnPointEstimator.train(2e-4,100,200,measure,hidden,
+  'Trained.Models/CNN.Point.Estimator.LG.ckpt',testMeasure,testHidden,1213)

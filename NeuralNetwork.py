@@ -70,6 +70,7 @@ class CnnPointEstimator:
       saver.save(sess,savePath)
     
     allLoss.dump(savePath[:-4]+'loss')
+    print('Training Done!')
 
   def infer(self,measure,hidden,variablePath):
     # measure and hidden are 2-D numpy arrays, whose shape[1] is the number of 
