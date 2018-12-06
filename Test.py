@@ -4,55 +4,37 @@
 import GenerativeModel as gm
 import Visualization as vs
 
-def testGenerativeModelLG(cZ,cX,meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries,
-dataFileName):
-  gm.linearGaussian(cZ,cX,meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries)
-  z,x = gm.loadData(dataFileName)
-  vs.scatterTimeSeries(z,'blue')
-  vs.scatterTimeSeries(x,'green')
+gm.linearGaussian(200,20)
+z,x = gm.loadData('Generated.Data/LG')
+vs.scatterTimeSeries(z,'blue')
+vs.scatterTimeSeries(x,'green')
 
-testGenerativeModelLG(1,2,0,0.3,0,0.1,100,20,
-'Generated.Data/LG.1.2.0.0.3.0.0.1')
-
-#%% Test Generative Model nonlinear Gaussian function
+#%% Test Generative Model non-linear Gaussian function
 import GenerativeModel as gm
 import Visualization as vs
 
-def testGenerativeModelNLG(meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries,
-dataFileName):
-  gm.nonlinearGaussian(meanZ,stdZ,meanX,stdX,numTimeSteps,numSeries)
-  z,x = gm.loadData(dataFileName)
-  vs.scatterTimeSeries(z,'blue')
-  vs.scatterTimeSeries(x,'green')
-
-testGenerativeModelNLG(0,0.3,0,0.1,100,20,'Generated.Data/NLG.0.0.3.0.0.1')
+gm.nonLinearGaussian(200,20)
+z,x = gm.loadData('Generated.Data/NLG')
+vs.scatterTimeSeries(z,'blue')
+vs.scatterTimeSeries(x,'green')
 
 #%% Test Generative Model linear non-Gaussian function
 import GenerativeModel as gm
 import Visualization as vs
 
-def testGenerativeModelLNG(cZ,cX,locZ,scaleZ,shapeX,scaleX,numTimeSteps,
-  numSeries,dataFileName):
-  gm.linearNonGaussian(cZ,cX,locZ,scaleZ,shapeX,scaleX,numTimeSteps,numSeries)
-  z,x = gm.loadData(dataFileName)
-  vs.scatterTimeSeries(z,'blue')
-  vs.scatterTimeSeries(x,'green')
-
-testGenerativeModelLNG(1,2,0,1.2,1,1,100,20,
-'Generated.Data/LNG.1.2.0.1.2.1.1')
+gm.linearNonGaussian(200,20)
+z,x = gm.loadData('Generated.Data/LNG')
+vs.scatterTimeSeries(z,'blue')
+vs.scatterTimeSeries(x,'green')
 
 #%% Test Generative Model non-linear non-Gaussian function
 import GenerativeModel as gm
 import Visualization as vs
 
-def testGenerativeModelNLNG(locZ,scaleZ,shapeX,scaleX,numTimeSteps,
-  numSeries,dataFileName):
-  gm.nonlinearNonGaussian(locZ,scaleZ,shapeX,scaleX,numTimeSteps,numSeries)
-  z,x = gm.loadData(dataFileName)
-  vs.scatterTimeSeries(z,'blue')
-  vs.scatterTimeSeries(x,'green')
-
-testGenerativeModelNLNG(0,1.2,1,1,100,20,'Generated.Data/NLNG.0.1.2.1.1')
+gm.nonLinearNonGaussian(200,20)
+z,x = gm.loadData('Generated.Data/NLNG')
+vs.scatterTimeSeries(z,'blue')
+vs.scatterTimeSeries(x,'green')
 
 #%% Test Kalman smoother
 import KalmanSmoother as ks

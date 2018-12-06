@@ -1,14 +1,22 @@
 # This file shows how to use the models to reproduce the project. Please run 
 # this file using Jupyter Notebook or other tools that can run each cell 
-# seperately to see its function. See cell's comments for detailed description.
+# separately to see its function. See cell's comments for detailed description.
 
-#%% Generate data from Linear Gaussian model
+#%% Generate data from linear Gaussian model
 import GenerativeModel as gm
-gm.linearGaussian(0.9,3.5,0,1,0,1,200,5000)
+gm.linearGaussian(200,5000)
 
-#%% Generate data from NonLinear Gaussian model
+#%% Generate data from non-linear Gaussian model
 import GenerativeModel as gm
-gm.nonlinearGaussian(0,1,0,1,200,5000)
+gm.nonLinearGaussian(200,5000)
+
+#%% Generate data from linear non-Gaussian model
+import GenerativeModel as gm
+gm.linearNonGaussian(200,5000)
+
+#%% Generate data from non-linear non-Gaussian model
+import GenerativeModel as gm
+gm.nonLinearNonGaussian(200,5000)
 
 #%% Process data from linear Gaussian model with Kalman smoother.
 import KalmanSmoother as ks
