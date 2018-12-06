@@ -24,8 +24,9 @@ import GenerativeModel as gm
 import numpy as np
 import matplotlib.pyplot as plt
 
-testHidden, testMeasure = gm.loadData('Generated.Data/LG.Test.0.9.3.5.0.1.0.1')
+testHidden, testMeasure = gm.loadData('Generated.Data/LG.Test')
 numTimeSteps = testHidden.shape[1]
+# Parameter setted up according to GeneratedModel 
 smoother = ks.KalmanSmoother(0.9,3.5,0,1,0,1)
 sampleNo = 456
 
@@ -46,8 +47,8 @@ plt.show()
 import GenerativeModel as gm
 import NeuralNetwork as nn
 
-hidden,measure = gm.loadData('Generated.Data/LG.Train.0.9.3.5.0.1.0.1')
-testHidden, testMeasure = gm.loadData('Generated.Data/LG.Test.0.9.3.5.0.1.0.1')
+hidden,measure = gm.loadData('Generated.Data/LG.Train')
+testHidden, testMeasure = gm.loadData('Generated.Data/LG.Test')
 cnnPointEstimator = nn.CnnPointEstimator(hidden.shape[1])
 cnnPointEstimator.train(2e-4,100,200,measure,hidden,
   'Trained.Models/CNN.Point.Estimator.LG.ckpt',testMeasure,testHidden,1213)
