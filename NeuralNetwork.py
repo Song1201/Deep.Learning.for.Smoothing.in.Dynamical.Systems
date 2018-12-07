@@ -10,7 +10,7 @@ class CnnPointEstimator:
     self._buildCnnPointEstimator(numTimeSteps)
 
   def train(self,lr,batchSize,numEpochs,measure,hidden,savePath,testMeasure,
-    testHidden,testSample):
+    testHidden,testSample,showKalman=False):
     # measure and hidden are 2-D numpy arrays, whose shape[1] is the number of 
     # time steps.    
     with tf.device('/GPU:0'):
@@ -20,8 +20,9 @@ class CnnPointEstimator:
     # as before. 
     sampleTestMeasure = testMeasure[testSample:testSample+1]
     sampleTestHidden = testHidden[testSample:testSample+1]
-    testKalmanZ,dump = ks.loadResults('Results.Data/LG.Kalman.Results')
-    sampleTestKalmanZ = testKalmanZ[testSample]
+    if showKalman:
+      testKalmanZ,dump = ks.loadResults('Results.Data/LG.Kalman.Results')
+      sampleTestKalmanZ = testKalmanZ[testSample]
     numIters = measure.shape[0]//batchSize
     allLoss = np.zeros([numIters*numEpochs])
     iterRun = 0 # How many iteration has been run during training
@@ -59,7 +60,7 @@ class CnnPointEstimator:
           plt.figure(figsize=(10,5))
           plt.scatter(np.arange(sampleTestHidden.shape[1]),sampleTestHidden,
             marker='o',color='blue',s=4)
-          plt.plot(sampleTestKalmanZ,color='green')
+          if showKalman: plt.plot(sampleTestKalmanZ,color='green')
           plt.plot(sampleTestOutput.flatten(),color='red')
           plt.show()
       

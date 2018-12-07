@@ -1,0 +1,2 @@
+model_checkpoint_path: "CNN.Point.Estimator.NLG.ckpt"
+all_model_checkpoint_paths: "CNN.Point.Estimator.NLG.ckpt"

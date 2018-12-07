@@ -1,2 +1,8 @@
 1. All data in this project are 1 dimensional data. All programs only promise 
 working on 1 dimensional data.
+
+2. Parameters for training CNN point estimator for linear Gaussian model: 
+lr=2e-4, batchSize = 100, numEpoch = 200
+
+3. Parameters for training CNN point estimator for non-linear Gaussian model: 
+lr=2e-4, batchSize = 100, numEpoch = 200
