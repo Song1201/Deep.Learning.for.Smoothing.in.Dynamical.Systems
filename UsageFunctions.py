@@ -16,10 +16,10 @@ def trainCnnPointEstimator(modelType):
     testHidden,1213,showKalman=(modelType=='LG'))   
 
 # modelType can be 'LG'/'NLG'/'LNG'/'NLNG'
-def testCnnPointEstimator(modelType):
+def testCnnPointEstimator(modelType,sampleNo):
+  sampleNo -= 1
   testHidden,testMeasure = gm.loadData('Generated.Data/' + modelType + '.Test')
   cnnPointEstimator = nn.CnnPointEstimator(testHidden.shape[1])
-  sampleNo = 1213
   estimated = cnnPointEstimator.infer(testMeasure[sampleNo],
     'Trained.Models/CNN.Point.Estimator.' + modelType + 
     '/CNN.Point.Estimator.' + modelType + '.ckpt')
@@ -38,9 +38,31 @@ def testCnnPointEstimator(modelType):
 
  # modelType can be 'LG'/'NLG'/'LNG'/'NLNG'
 def trainRnnPointEstimator(modelType):
+  lr = 3e-4
   hidden,measure = gm.loadData('Generated.Data/' + modelType + '.Train')
   testHidden, testMeasure = gm.loadData('Generated.Data/' + modelType + '.Test')
   rnnPointEstimator = nn.RnnPointEstimator(hidden.shape[1])
-  rnnPointEstimator.train(2e-4,100,3,measure,hidden,
+  rnnPointEstimator.train(lr,100,200,measure,hidden,
     'Trained.Models/RNN.Point.Estimator.' + modelType + '.ckpt',testMeasure,
     testHidden,1213,showKalman=(modelType=='LG'))  
+
+# modelType can be 'LG'/'NLG'/'LNG'/'NLNG'
+def testRnnPointEstimator(modelType,sampleNo):
+  sampleNo -= 1
+  testHidden,testMeasure = gm.loadData('Generated.Data/' + modelType + '.Test')
+  rnnPointEstimator = nn.RnnPointEstimator(testHidden.shape[1])
+  estimated = rnnPointEstimator.infer(testMeasure[sampleNo],
+    'Trained.Models/RNN.Point.Estimator.' + modelType + 
+    '/RNN.Point.Estimator.' + modelType + '.ckpt')
+  loss = rnnPointEstimator.computeLoss(estimated,testHidden[sampleNo],
+    'Trained.Models/RNN.Point.Estimator.' + modelType + 
+    '/RNN.Point.Estimator.' + modelType + '.ckpt')
+  if modelType=='LG':
+    testKalmanZ,dump = ks.loadResults('Results.Data/' + modelType + 
+      '.Kalman.Results')
+  plt.figure(figsize=(10,5))
+  plt.scatter(np.arange(testHidden.shape[1]),testHidden[sampleNo],
+    marker='o',color='blue',s=4)
+  if modelType=='LG': plt.plot(testKalmanZ[sampleNo],color='green')
+  plt.plot(estimated.flatten(),color='red')
+  plt.show()

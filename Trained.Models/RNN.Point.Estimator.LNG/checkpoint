@@ -1,0 +1,2 @@
+model_checkpoint_path: "RNN.Point.Estimator.LNG.ckpt"
+all_model_checkpoint_paths: "RNN.Point.Estimator.LNG.ckpt"
