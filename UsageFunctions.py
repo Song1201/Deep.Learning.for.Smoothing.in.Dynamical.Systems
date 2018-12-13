@@ -35,3 +35,12 @@ def testCnnPointEstimator(modelType):
   if modelType=='LG': plt.plot(testKalmanZ[sampleNo],color='green')
   plt.plot(estimated.flatten(),color='red')
   plt.show()
+
+ # modelType can be 'LG'/'NLG'/'LNG'/'NLNG'
+def trainRnnPointEstimator(modelType):
+  hidden,measure = gm.loadData('Generated.Data/' + modelType + '.Train')
+  testHidden, testMeasure = gm.loadData('Generated.Data/' + modelType + '.Test')
+  rnnPointEstimator = nn.RnnPointEstimator(hidden.shape[1])
+  rnnPointEstimator.train(2e-4,100,3,measure,hidden,
+    'Trained.Models/RNN.Point.Estimator.' + modelType + '.ckpt',testMeasure,
+    testHidden,1213,showKalman=(modelType=='LG'))  

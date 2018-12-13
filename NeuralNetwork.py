@@ -4,13 +4,11 @@ import matplotlib.pyplot as plt
 from datetime import datetime as dt
 import KalmanSmoother as ks
 
-class CnnPointEstimator:
 
-  def __init__(self,numTimeSteps):
-    self._buildCnnPointEstimator(numTimeSteps)
+class NeuralNetwork:
 
   def train(self,lr,batchSize,numEpochs,measure,hidden,savePath,testMeasure,
-    testHidden,testSample,showKalman=False):
+  testHidden,testSample,showKalman=False):
     # measure and hidden are 2-D numpy arrays, whose shape[1] is the number of 
     # time steps.    
     with tf.device('/GPU:0'):
@@ -31,6 +29,7 @@ class CnnPointEstimator:
     saver = tf.train.Saver()
     with tf.Session() as sess:
       sess.run(tf.initializers.global_variables())
+      PLOTS_INTERVAL = 1
       for i in range(numEpochs):
         np.random.shuffle(randIndex)
         measure = measure[randIndex] 
@@ -42,7 +41,7 @@ class CnnPointEstimator:
             {self.measure:batchMeasure,self.hidden:batchHidden})
           iterRun += 1
 
-        if (i+1)%1==0:    
+        if (i+1)%PLOTS_INTERVAL==0:    
           print(dt.now().time())
           # Mean of all losses of batches in this epoch
           meanLossEpoch = np.mean(allLoss[i*numIters:(i+1)*numIters])
@@ -84,6 +83,12 @@ class CnnPointEstimator:
     with tf.Session() as sess:
       saver.restore(sess,variablePath)
       return self.loss.eval({self.output:hypothesis,self.hidden:trueValue})
+
+
+class CnnPointEstimator(NeuralNetwork):
+
+  def __init__(self,numTimeSteps):
+    self._buildCnnPointEstimator(numTimeSteps)
 
   # Build a graph for CNN point estimator. Return the placeholder for input, and 
   # other necessary interface.
@@ -150,3 +155,88 @@ class CnnPointEstimator:
     conv = tf.nn.convolution(inputTensor,w,dilation_rate=[dilatedRate],
       padding='VALID')
     return tf.nn.relu(tf.nn.bias_add(conv,b))    
+
+
+class RnnPointEstimator(NeuralNetwork):
+
+  def __init__(self,numTimeSteps):
+    self._buildRnnPointEstimator(numTimeSteps)
+
+  def infer(self,measure,variablePath): 
+    if len(measure.shape)==1: 
+      measure = measure.reshape(1,-1)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+      saver.restore(sess,variablePath)
+      return self.output.eval({self.measure:measure})
+
+  def computeLoss(self,hypothesis,trueValue,variablePath):
+    if len(hypothesis.shape)==1: hypothesis = hypothesis.reshape(1,-1)
+    if len(trueValue.shape)==1: trueValue = trueValue.reshape(1,-1)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+      saver.restore(sess,variablePath)
+      return self.loss.eval({self.output:hypothesis,self.hidden:trueValue})
+
+  # Build a graph for RNN point estimator. Return the placeholder for input, and 
+  # other necessary interface.
+  def _buildRnnPointEstimator(self,numTimeSteps):
+    KERNEL_SIZE = 1
+    INIT_STD = 0.1
+    INIT_CONST = 0.1
+    DTYPE = tf.float32
+
+    with tf.device('/GPU:0'):
+      self.measure = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
+      self.hidden = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
+      
+      with tf.variable_scope('NewHidden',reuse=tf.AUTO_REUSE) as scope:
+        newHidden = self._computeNewHidden(1,self.measure,DTYPE,INIT_STD,
+          INIT_CONST)
+
+      with tf.variable_scope('Z',reuse=tf.AUTO_REUSE) as scope:
+        z = self._computeZ(KERNEL_SIZE,newHidden,DTYPE,INIT_STD,INIT_CONST)
+      
+      self.output = tf.stack(z,1)
+      # print(self.output.shape)
+
+      # pseudo-Huber loss function
+      self.loss = tf.reduce_sum(tf.sqrt(1+tf.square(self.hidden-self.output))-1)
+
+  def _computeNewHidden(self,kernelSize,inputTensor,dtype,initStd,initConst):
+    wX = tf.get_variable(name='wX',shape=[kernelSize],dtype=dtype,
+      initializer=tf.truncated_normal_initializer(stddev=initStd))
+    wH = tf.get_variable(name='wH',shape=[kernelSize],dtype=dtype,
+      initializer=tf.truncated_normal_initializer(stddev=initStd))
+    b = tf.get_variable(name='b',shape=[kernelSize],dtype=dtype,
+      initializer=tf.constant_initializer(initConst))
+
+    numTimeSteps = inputTensor.shape[1].value    
+    newHidden = [0]*numTimeSteps
+    nextNewHidden = 0
+    for i in range(numTimeSteps-1,-1,-1):
+      currNewHidden = tf.nn.relu(wX*inputTensor[:,i]+wH*nextNewHidden+b)
+      nextNewHidden = newHidden[i] = currNewHidden
+    
+    return newHidden
+
+  def _computeZ(self,kernelSize,newHidden,dtype,initStd,
+    initConst):
+    wC = tf.get_variable(name='wC',shape=[kernelSize],dtype=dtype,
+      initializer=tf.truncated_normal_initializer(stddev=initStd))
+    bC = tf.get_variable(name='bC',shape=[kernelSize],dtype=dtype,
+      initializer=tf.constant_initializer(initConst))
+    wZ = tf.get_variable(name='wZ',shape=[kernelSize],dtype=dtype,
+      initializer=tf.truncated_normal_initializer(stddev=initStd))
+    bZ = tf.get_variable(name='bZ',shape=[kernelSize],dtype=dtype,
+      initializer=tf.constant_initializer(initConst))
+    
+    numTimeSteps = len(newHidden)    
+    z = [0]*numTimeSteps
+    lastZ = 0
+    for i in range(numTimeSteps):
+      combinedHidden = 0.5*(tf.nn.tanh(wC*lastZ+bC)+newHidden[i])
+      lastZ = z[i] = wZ*combinedHidden + bZ
+    
+    return z
+

@@ -87,3 +87,8 @@ uf.trainCnnPointEstimator('NLNG')
 #%% Load CNN point estimator for non-linear non-Gaussian model and test it.
 import UsageFunctions as uf
 uf.testCnnPointEstimator('NLNG')
+
+
+#%% Build and train a CNN point estimator for linear Gaussian model
+import UsageFunctions as uf
+uf.trainRnnPointEstimator('LG')
