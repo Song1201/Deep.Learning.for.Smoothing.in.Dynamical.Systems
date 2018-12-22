@@ -198,7 +198,6 @@ class RnnPointEstimator(NeuralNetwork):
         z = self._computeZ(KERNEL_SIZE,newHidden,DTYPE,INIT_STD,INIT_CONST)
       
       self.output = tf.stack(z,1)
-      # print(self.output.shape)
 
       # pseudo-Huber loss function
       self.loss = tf.reduce_sum(tf.sqrt(1+tf.square(self.hidden-self.output))-1)
@@ -235,8 +234,80 @@ class RnnPointEstimator(NeuralNetwork):
     z = [0]*numTimeSteps
     lastZ = 0
     for i in range(numTimeSteps):
+      self.combinedHidden = 0.5*(tf.nn.tanh(wC*lastZ+bC)+newHidden[i])
+      lastZ = z[i] = wZ*self.combinedHidden + bZ
+    
+    return z
+
+
+class StructuredInferenceSmoother(RnnPointEstimator):
+  def __init__(self, numTimeSteps):
+    
+    self.stdVI = tf.nn.softplus(tf.matmul(h_comb[i], W_sigma) + b_sigma)
+
+  def _buildStructuredInferenceSmoother(self,numTimeSteps):
+    super()._buildRnnPointEstimator(numTimeSteps)
+    self.meanVI = self.output
+
+    KERNEL_SIZE = 1
+    INIT_STD = 0.1
+    INIT_CONST = 0.1
+    DTYPE = tf.float32
+
+    with tf.device('/GPU:0'):
+      self.measure = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
+      self.hidden = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
+      
+      with tf.variable_scope('NewHidden',reuse=tf.AUTO_REUSE) as scope:
+        newHidden = self._computeNewHidden(1,self.measure,DTYPE,INIT_STD,
+          INIT_CONST)
+
+      with tf.variable_scope('Z',reuse=tf.AUTO_REUSE) as scope:
+        z = self._computeZ(KERNEL_SIZE,newHidden,DTYPE,INIT_STD,INIT_CONST)
+      
+      self.output = tf.stack(z,1)
+      # print(self.output.shape)
+
+      # pseudo-Huber loss function
+      self.loss = tf.reduce_sum(tf.sqrt(1+tf.square(self.hidden-self.output))-1)
+
+  def _computeStdVI(self,kernelSize,newHidden,dtype,initStd,
+    initConst):
+    wStd = tf.get_variable(name='wStd',shape=[kernelSize],dtype=dtype,
+      initializer=tf.truncated_normal_initializer(stddev=initStd))
+    bStd = tf.get_variable(name='bStd',shape=[kernelSize],dtype=dtype,
+      initializer=tf.constant_initializer(initConst))
+    
+    numTimeSteps = len(self.combinedHidden)    
+    std = [0]*numTimeSteps
+    for i in range(numTimeSteps):
       combinedHidden = 0.5*(tf.nn.tanh(wC*lastZ+bC)+newHidden[i])
       lastZ = z[i] = wZ*combinedHidden + bZ
     
     return z
 
+
+
+
+def getELBO(x, mu, sigma, eps_series, model, batch_size, nTimeSteps):
+  zDim, xDim, A, B, Q, R, z0, Q0 = model.returnParameters()
+  elbo = 0
+  for sample in range(batch_size):
+      z = []
+      for i in range(nTimeSteps):
+          eps_id = sample*nTimeSteps+i
+          sgm = sigma[i]
+          z.append(mu[i]+eps_series[(eps_id)]*sgm)
+          log_cond = - 0.5*tf.square((x[i])-B*z[-1])/(R*R)
+        
+          N0 = tf.distributions.Normal(mu[i], sgm)
+          if i == 0:
+              N1 = tf.distributions.Normal(np.float64(0), Q, name='N1_0')
+          else:
+              N1 = tf.distributions.Normal(A*z[-2], Q)
+
+          kl = tf.contrib.distributions.kl_divergence(N0, N1) 
+          
+          elbo = elbo + log_cond - kl
+
+  return elbo/batch_size     
