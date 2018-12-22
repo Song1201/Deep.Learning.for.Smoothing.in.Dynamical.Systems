@@ -233,9 +233,11 @@ class RnnPointEstimator(NeuralNetwork):
     numTimeSteps = len(newHidden)    
     z = [0]*numTimeSteps
     lastZ = 0
+    self.combinedHidden = []
     for i in range(numTimeSteps):
-      self.combinedHidden = 0.5*(tf.nn.tanh(wC*lastZ+bC)+newHidden[i])
-      lastZ = z[i] = wZ*self.combinedHidden + bZ
+      # self.combinedHidden = 0.5*(tf.nn.tanh(wC*lastZ+bC)+newHidden[i])
+      self.combinedHidden.append(0.5*(tf.nn.tanh(wC*lastZ+bC)+newHidden[i]))
+      lastZ = z[i] = wZ*self.combinedHidden[-1] + bZ
     
     return z
 
