@@ -127,3 +127,8 @@ uf.trainRnnPointEstimator('NLNG')
 #%% Load RNN point estimator for non-linear non-Gaussian model and test it.
 import UsageFunctions as uf
 uf.testRnnPointEstimator('NLNG',sampleNo=2000)
+
+
+#%%
+import BBVI as vi
+vi.BBVI()

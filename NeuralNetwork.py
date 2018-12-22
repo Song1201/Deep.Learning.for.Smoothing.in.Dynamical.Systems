@@ -41,7 +41,7 @@ class NeuralNetwork:
             {self.measure:batchMeasure,self.hidden:batchHidden})
           iterRun += 1
 
-        if (i+1)%PLOTS_INTERVAL==0:    
+        if (i+1)%PLOTS_INTERVAL == 0:    
           print(dt.now().time())
           # Mean of all losses of batches in this epoch
           meanLossEpoch = np.mean(allLoss[i*numIters:(i+1)*numIters])
