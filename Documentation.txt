@@ -4,5 +4,5 @@ working on 1 dimensional data.
 2. Parameters for training CNN point estimators for all 4 types of models: 
 lr=2e-4, batchSize = 100, numEpoch = 200
 
-3. Parameters for training RNN point estimators for all linear Gaussian model: 
+3. Parameters for training RNN point estimators for all 4 types of models: 
 lr=3e-4, batchSize = 100, numEpoch = 200

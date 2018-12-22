@@ -1,5 +1,4 @@
 # Some functions for Usage.py
-
 import GenerativeModel as gm
 import NeuralNetwork as nn
 import numpy as np

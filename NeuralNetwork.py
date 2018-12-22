@@ -19,7 +19,8 @@ class NeuralNetwork:
     sampleTestMeasure = testMeasure[testSample:testSample+1]
     sampleTestHidden = testHidden[testSample:testSample+1]
     if showKalman:
-      testKalmanZ,dump = ks.loadResults('Results.Data/LG.Kalman.Results')
+      testKalmanZ,testKalmanStd = ks.loadResults(
+        'Results.Data/LG.Kalman.Results')
       sampleTestKalmanZ = testKalmanZ[testSample]
     numIters = measure.shape[0]//batchSize
     allLoss = np.zeros([numIters*numEpochs])
@@ -159,7 +160,7 @@ class CnnPointEstimator(NeuralNetwork):
 
 class RnnPointEstimator(NeuralNetwork):
 
-  def __init__(self,numTimeSteps):
+  def __init__(self,numTimeSteps,):
     self._buildRnnPointEstimator(numTimeSteps)
 
   def infer(self,measure,variablePath): 
@@ -242,12 +243,12 @@ class RnnPointEstimator(NeuralNetwork):
     return z
 
 
+# Is not fully completed yet.
 class StructuredInferenceSmoother(RnnPointEstimator):
-  def __init__(self, numTimeSteps):
-    
-    self.stdVI = tf.nn.softplus(tf.matmul(h_comb[i], W_sigma) + b_sigma)
+  def __init__(self, numTimeSteps,cZ,cX,stdZ,stdX):
+    self._buildStructuredInferenceSmoother(numTimeSteps,cZ,cX,stdZ,stdX)
 
-  def _buildStructuredInferenceSmoother(self,numTimeSteps):
+  def _buildStructuredInferenceSmoother(self,numTimeSteps,cZ,cX,stdZ,stdX):
     super()._buildRnnPointEstimator(numTimeSteps)
     self.meanVI = self.output
 
@@ -255,26 +256,16 @@ class StructuredInferenceSmoother(RnnPointEstimator):
     INIT_STD = 0.1
     INIT_CONST = 0.1
     DTYPE = tf.float32
+    NUM_SAMPLES = 3
 
     with tf.device('/GPU:0'):
-      self.measure = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
-      self.hidden = tf.placeholder(dtype=DTYPE,shape=[None,numTimeSteps])
-      
-      with tf.variable_scope('NewHidden',reuse=tf.AUTO_REUSE) as scope:
-        newHidden = self._computeNewHidden(1,self.measure,DTYPE,INIT_STD,
-          INIT_CONST)
+      with tf.variable_scope('Std',reuse=tf.AUTO_REUSE) as scope:
+        std = self._computeStdVI(KERNEL_SIZE,DTYPE,INIT_STD,INIT_CONST)
+      self.stdVI = tf.stack(std,1)
+      self.elbo = self._computeElbo(NUM_SAMPLES,cZ,cX,stdZ,stdX)
+      self.loss = -self.elbo
 
-      with tf.variable_scope('Z',reuse=tf.AUTO_REUSE) as scope:
-        z = self._computeZ(KERNEL_SIZE,newHidden,DTYPE,INIT_STD,INIT_CONST)
-      
-      self.output = tf.stack(z,1)
-      # print(self.output.shape)
-
-      # pseudo-Huber loss function
-      self.loss = tf.reduce_sum(tf.sqrt(1+tf.square(self.hidden-self.output))-1)
-
-  def _computeStdVI(self,kernelSize,newHidden,dtype,initStd,
-    initConst):
+  def _computeStdVI(self,kernelSize,dtype,initStd,initConst):
     wStd = tf.get_variable(name='wStd',shape=[kernelSize],dtype=dtype,
       initializer=tf.truncated_normal_initializer(stddev=initStd))
     bStd = tf.get_variable(name='bStd',shape=[kernelSize],dtype=dtype,
@@ -283,33 +274,31 @@ class StructuredInferenceSmoother(RnnPointEstimator):
     numTimeSteps = len(self.combinedHidden)    
     std = [0]*numTimeSteps
     for i in range(numTimeSteps):
-      combinedHidden = 0.5*(tf.nn.tanh(wC*lastZ+bC)+newHidden[i])
-      lastZ = z[i] = wZ*combinedHidden + bZ
-    
-    return z
+      # std[i] = tf.nn.softplus(tf.matmul(wStd,self.combinedHidden[i])+bStd)
+      std[i] = tf.nn.softplus(wStd*self.combinedHidden[i]+bStd)
+    return std
 
-
-
-
-def getELBO(x, mu, sigma, eps_series, model, batch_size, nTimeSteps):
-  zDim, xDim, A, B, Q, R, z0, Q0 = model.returnParameters()
-  elbo = 0
-  for sample in range(batch_size):
-      z = []
-      for i in range(nTimeSteps):
-          eps_id = sample*nTimeSteps+i
-          sgm = sigma[i]
-          z.append(mu[i]+eps_series[(eps_id)]*sgm)
-          log_cond = - 0.5*tf.square((x[i])-B*z[-1])/(R*R)
-        
-          N0 = tf.distributions.Normal(mu[i], sgm)
-          if i == 0:
-              N1 = tf.distributions.Normal(np.float64(0), Q, name='N1_0')
-          else:
-              N1 = tf.distributions.Normal(A*z[-2], Q)
-
-          kl = tf.contrib.distributions.kl_divergence(N0, N1) 
-          
-          elbo = elbo + log_cond - kl
-
-  return elbo/batch_size     
+  def _computeElbo(self,numSamples,cZ,cX,stdZ,stdX):
+    numTimeSteps = self.measure.shape[1].value
+    # epsilons = tf.placeholder(dtype=tf.float64,shape=[numSamples,numTimeSteps])
+    standardNorm = tf.distributions.Normal(0.,1.)
+    epsilons = standardNorm.sample([numSamples,numTimeSteps])
+    elbo = 0
+    for i in range(numSamples):
+      lastSampledZ = 0.
+      for j in range(numTimeSteps):
+        # eps_id = sample*nTimeSteps+i
+        # z.append(mu[i]+eps_series[(eps_id)]*self.stdVI[i])
+        sampledZ = self.meanVI[j] + epsilons[i,j]*self.stdVI[j]
+        logCondition = -0.5 * (self.measure[j]-cX*sampledZ)**2 / stdX**2
+        N0 = tf.distributions.Normal(self.meanVI[j], self.stdVI[j])
+        N1 = tf.distributions.Normal(cZ*lastSampledZ,float(stdZ))
+        kl = tf.distributions.kl_divergence(N0, N1) 
+        elbo += logCondition - kl
+        lastSampledZ = sampledZ
+        # if j == 0:
+        #   # N1 = tf.distributions.Normal(np.float64(0), stdZ)
+        #   N1 = tf.distributions.Normal(0, stdZ)
+        # else:
+        #   N1 = tf.distributions.Normal(cZ*z[-2], stdZ)
+    return elbo/numSamples

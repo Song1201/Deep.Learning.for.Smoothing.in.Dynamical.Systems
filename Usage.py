@@ -129,7 +129,6 @@ import UsageFunctions as uf
 uf.testRnnPointEstimator('NLNG',sampleNo=2000)
 
 
-#%%
+#%% Implement BBVI (Black Box Variational Inference) for linear Gaussian model
 import BBVI as vi
 vi.BBVI()
-
