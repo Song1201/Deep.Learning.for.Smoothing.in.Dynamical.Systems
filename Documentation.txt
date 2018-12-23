@@ -1,3 +1,8 @@
+See usage.py file about how to run the programs. Use structuredInference.py 
+file in the StructuredInference directory to run structured variational 
+inference. The programs in StructuredInference directory are old code before 
+refactorization. It runs separately from the other files.
+ 
 1. All data in this project are 1 dimensional data. All programs only promise 
 working on 1 dimensional data.
 
